@@ -1,8 +1,8 @@
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
-from misoc.interconnect.csr import *
-from misoc.cores.code_8b10b import Encoder
+from litex.soc.interconnect.csr import *
+from litex.soc.cores.code_8b10b import Encoder
 
 from jesd204b.phy.gth_init import GTHInit
 from jesd204b.phy.prbs import *

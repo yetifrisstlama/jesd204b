@@ -4,7 +4,7 @@ from jesd204b.common import *
 from jesd204b.phy.gtx import GTXTransmitter
 from jesd204b.phy.gth import GTHTransmitter
 
-from misoc.interconnect.csr import *
+from litex.soc.interconnect.csr import *
 
 
 class JESD204BPhyTX(Module, AutoCSR):
