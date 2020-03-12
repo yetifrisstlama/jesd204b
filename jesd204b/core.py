@@ -6,7 +6,7 @@ from migen.genlib.cdc import MultiReg, ElasticBuffer
 from migen.genlib.misc import WaitTimer
 from migen.genlib.io import DifferentialInput
 
-from misoc.interconnect.csr import *
+from litex.soc.interconnect.csr import *
 
 from jesd204b.transport import (JESD204BTransportTX,
                                 JESD204BSTPLGenerator)
@@ -17,7 +17,7 @@ class JESD204BCoreTX(Module):
     def __init__(self, phys, jesd_settings, converter_data_width):
         self.enable = Signal()
         self.jsync = Signal()
-        self.jref = Signal()
+        # self.jref = Signal()
         self.phy_done = Signal()
         self.ready = Signal()
 
@@ -73,7 +73,7 @@ class JESD204BCoreTX(Module):
             self.comb += [
                 link.reset.eq(~phy_done),
                 link.jsync.eq(self.jsync_jesd),
-                link.jref.eq(self.jref)
+                # link.jref.eq(self.jref)
             ]
 
             # connect data
@@ -115,7 +115,7 @@ class JESD204BCoreTX(Module):
 
     def do_finalize(self):
         assert hasattr(self, "jsync_registered")
-        assert hasattr(self, "jref_registered")
+        # assert hasattr(self, "jref_registered")
 
 
 class JESD204BCoreTXControl(Module, AutoCSR):

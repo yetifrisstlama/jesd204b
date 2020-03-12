@@ -271,15 +271,15 @@ class JESD204BLinkTX(Module):
         ]
 
         jsync = Signal()
-        jref = Signal()
-        jref_d = Signal()
-        jref_rising = Signal()
+        # jref = Signal()
+        # jref_d = Signal()
+        # jref_rising = Signal()
         self.sync += [
             jsync.eq(self.jsync),
-            jref.eq(self.jref),
-            jref_d.eq(jref)
+            # jref.eq(self.jref),
+            # jref_d.eq(jref)
         ]
-        self.comb += jref_rising.eq(jref & ~jref_d)
+        # self.comb += jref_rising.eq(jref & ~jref_d)
 
         # FSM
         self.submodules.fsm = fsm = FSM(reset_state="CGS")
@@ -292,7 +292,7 @@ class JESD204BLinkTX(Module):
             source.data.eq(cgs.source.data),
             source.ctrl.eq(cgs.source.ctrl),
             # start ILAS on first LMFC after jsync is asserted
-            If(jsync & jref_rising,
+            If(jsync,  # & jref_rising,
                 NextState("ILAS")
             )
         )
