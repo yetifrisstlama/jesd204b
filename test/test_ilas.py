@@ -31,11 +31,14 @@ ilas_reference = [
 
 class TestILAS(unittest.TestCase):
     def test_ilas(self):
-        ps = JESD204BPhysicalSettings(l=4, m=4, n=14, np=16)
-        ts = JESD204BTransportSettings(f=2, s=1, k=32, cs=2)
-        jesd_settings = JESD204BSettings(ps, ts, did=0x55, bid=0xa)
-
-        ilas = ILASGenerator(32, 2, 32, jesd_settings.get_configuration_data())
+        ps = JESD204BPhysicalSettings(l=1, m=2, n=16, np=16)
+        ts = JESD204BTransportSettings(f=4, s=1, k=32, cs=0)
+        jesd_settings = JESD204BSettings(ps, ts, did=0x5a, bid=0x5)
+        data_width = 32
+        ilas = ILASGenerator(data_width,
+                             jesd_settings.octets_per_lane,
+                             jesd_settings.transport.k,
+                             jesd_settings.get_configuration_data())
 
         ilas_output = []
 
@@ -45,7 +48,10 @@ class TestILAS(unittest.TestCase):
             yield dut.reset.eq(0)
             while (yield dut.source.last) == 0:
                 yield
-                ilas_output.append((yield dut.source.data))
+                dat = (yield dut.source.data)
+                k = (yield dut.source.ctrl)
+                ilas_output.append(dat)
+                print("{:08x}, {:04b}".format(dat, k))
 
         run_simulation(ilas, generator(ilas))
         self.assertEqual(ilas_reference, ilas_output)

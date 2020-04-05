@@ -59,6 +59,18 @@ configuration_data_fields = {
     "chksum":    Field(13, 0, 8)
 }
 
+# TODO here are too many classes with too little functionality!!!
+
+def hd(dat, pad_width=1, word_width=None):
+    ''' print a hex-dump, word_width in bytes '''
+    if word_width is None:
+        word_width = pad_width
+    for i, d in enumerate(dat):
+        if i % 8 == 0 and len(dat) > 8:
+            print('\n{:04x}: '.format(i * word_width), end='')
+        print('{:0{ww}x} '.format(d, ww=pad_width * 2), end='')
+    print()
+
 
 class JESD204BConfigurationData:
     def __init__(self):
@@ -67,16 +79,22 @@ class JESD204BConfigurationData:
 
     def get_octets(self):
         octets = [0]*configuration_data_length
+        print("JESD204BConfigurationData():")
         for name, field in configuration_data_fields.items():
             field_value = getattr(self, name) & (2**field.width-1)
+            print('{:>16s}: {:}'.format(name, field_value))
             octets[field.octet] |= (field_value << field.offset)
+
+        # AD9174, FCHK_N = 1:
+        # Checksum is calculated by summing the registers containing the packed link
+        # configuration fields (sum of Register 0x450 to Register 0x45A, modulo 256).
+        f_chk = configuration_data_fields['chksum']
+        octets[f_chk.octet] = sum(octets[:0x0a + 1]) & 0xFF
+        print('jesd config hexdump:', end='')
+        hd(octets)
+        print()
         return octets
 
-    def get_checksum(self):
-        checksum = 0
-        for name, field in configuration_data_fields.items():
-            checksum += getattr(self, name) & (2**field.width-1)
-        return checksum % 256
 
 # settings
 
@@ -89,14 +107,14 @@ class JESD204BTransportSettings:
 
 
 class JESD204BPhysicalSettings:
-    def __init__(self, l, m, n, np):
+    def __init__(self, l, m, n, np, subclassv=0b001):
         self.l = l # lanes
         self.m = m # converters
         self.n = n # bits/converter
         self.np = np # bits/sample
 
         # only support subclass 1
-        self.subclassv = 0b001
+        self.subclassv = subclassv
         self.adjcnt = 0
         self.adjdir = 0
         self.phadj = 0
@@ -106,11 +124,12 @@ class JESD204BPhysicalSettings:
 
 
 class JESD204BSettings:
-    def __init__(self, phy_settings, transport_settings, did, bid):
+    def __init__(self, phy_settings, transport_settings, did, bid, hd=0):
         self.phy = phy_settings
         self.transport = transport_settings
         self.did = did
         self.bid = bid
+        self.hd = hd
 
         # compute internal settings
         self.nconverters = phy_settings.m
@@ -143,10 +162,9 @@ class JESD204BSettings:
         cd.k = self.transport.k - 1
         cd.s = self.transport.s - 1
         cd.cs = self.transport.cs
+        cd.hd = self.hd
 
-        octets = cd.get_octets()
-        chksum = cd.get_checksum()
-        return octets[:-1] + [chksum]
+        return cd.get_octets()
 
     def get_configuration_checksum(self, lid=0):
         return self.get_configuration_data(lid)[-1]

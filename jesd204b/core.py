@@ -17,7 +17,7 @@ class JESD204BCoreTX(Module):
     def __init__(self, phys, jesd_settings, converter_data_width):
         self.enable = Signal()
         self.jsync = Signal()
-        # self.jref = Signal()
+        self.jref = Signal()
         self.phy_done = Signal()
         self.ready = Signal()
 
@@ -56,9 +56,15 @@ class JESD204BCoreTX(Module):
         links = []
         phy_done = Signal()
         self.comb += phy_done.eq(reduce(and_, [phy.transmitter.init.done for phy in phys]))
-        for n, (phy, lane) in enumerate(zip(phys, transport.source.flatten())):
+        lanes = transport.source.flatten()
+        for n, (phy, lane) in enumerate(zip(phys, lanes)):
+            print(n, phy, lane)
+
             phy_name = "phy{}".format(n)
-            phy_cd = phy_name + "_tx"
+            if len(lanes) > 1:
+                phy_cd = phy_name + "_tx"
+            else:
+                phy_cd = "tx"
 
             # claim the phy
             setattr(self.submodules, phy_name, phy)
@@ -68,12 +74,13 @@ class JESD204BCoreTX(Module):
 
             link = ClockDomainsRenamer("jesd")(
                 JESD204BLinkTX(len(phy.data), jesd_settings, n))
-            self.submodules += link
+            # self.submodules += link
+            setattr(self.submodules, 'link{}'.format(n), link)
             links.append(link)
             self.comb += [
                 link.reset.eq(~phy_done),
                 link.jsync.eq(self.jsync_jesd),
-                # link.jref.eq(self.jref)
+                link.jref.eq(self.jref)
             ]
 
             # connect data
@@ -115,7 +122,7 @@ class JESD204BCoreTX(Module):
 
     def do_finalize(self):
         assert hasattr(self, "jsync_registered")
-        # assert hasattr(self, "jref_registered")
+        assert hasattr(self, "jref_registered")
 
 
 class JESD204BCoreTXControl(Module, AutoCSR):

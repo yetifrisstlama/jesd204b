@@ -186,7 +186,8 @@ class GTXTransmitter(Module, AutoCSR):
     def __init__(self, pll, tx_pads, sys_clk_freq, polarity=0):
         self.prbs_config = Signal(2)
 
-        self.produce_square_wave = CSRStorage()
+        self.tp_on = CSRStorage()
+        self.tp = CSRStorage(40, reset=0b1111111111111111111100000000000000000000)
 
         self.txdiffcttrl = CSRStorage(4, reset=0b1000)
         self.txmaincursor = CSRStorage(7, reset=80)
@@ -298,9 +299,9 @@ class GTXTransmitter(Module, AutoCSR):
         self.comb += [
             self.prbs.config.eq(self.prbs_config),
             self.prbs.i.eq(Cat(*[self.encoder.output[i] for i in range(nwords)])),
-            If(self.produce_square_wave.storage,
+            If(self.tp_on.storage,
                 # square wave @ linerate/40 for scope observation
-                txdata.eq(0b1111111111111111111100000000000000000000)
+                txdata.eq(self.tp.storage[::-1])
             ).Else(
                 txdata.eq(self.prbs.o)
             )

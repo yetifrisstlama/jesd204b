@@ -8,7 +8,7 @@ from litex.soc.interconnect.csr import *
 
 
 class JESD204BPhyTX(Module, AutoCSR):
-    def __init__(self, pll, tx_pads, sys_clk_freq, transceiver="gtx"):
+    def __init__(self, pll, tx_pads, sys_clk_freq, transceiver="gtx", **kwargs):
         self.data = Signal(32)
         self.ctrl = Signal(32//8)
 
@@ -21,7 +21,8 @@ class JESD204BPhyTX(Module, AutoCSR):
         self.submodules.transmitter = transmitters[transceiver](
             pll=pll,
             tx_pads=tx_pads,
-            sys_clk_freq=sys_clk_freq
+            sys_clk_freq=sys_clk_freq,
+            **kwargs
         )
         for i in range(32//8):
             self.comb += [
