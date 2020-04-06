@@ -173,10 +173,12 @@ class ILASGenerator(Module):
         ilas_octets = []
         for i in range(4):
             if with_counter:
-                multiframe = [i*octets_per_multiframe + j
-                    for j in range(octets_per_multiframe)]
+                multiframe = [
+                    (i * octets_per_multiframe + j) & 0xFF
+                    for j in range(octets_per_multiframe)
+                ]
             else:
-                multiframe = [0]*octets_per_multiframe
+                multiframe = [0] * octets_per_multiframe
             multiframe[0]  = Control(control_characters["R"])
             multiframe[-1] = Control(control_characters["A"])
             if i == 1:
@@ -187,9 +189,9 @@ class ILASGenerator(Module):
         # pack ilas's octets in a lookup table
 
         octets_per_clock = data_width//8
-
         ilas_data_words = []
         ilas_ctrl_words = []
+        print('JESD204B ILAS data:')
         for i in range(len(ilas_octets)//octets_per_clock):
             data_word = 0
             ctrl_word = 0
@@ -202,6 +204,7 @@ class ILASGenerator(Module):
                     data_word |= (octet << 8*j)
             ilas_data_words.append(data_word)
             ilas_ctrl_words.append(ctrl_word)
+            print('    {:08x} {:04b}'.format(data_word, ctrl_word))
 
         assert len(ilas_data_words) == (octets_per_frame*
                                         frames_per_multiframe*

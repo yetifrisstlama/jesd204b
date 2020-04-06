@@ -59,18 +59,6 @@ configuration_data_fields = {
     "chksum":    Field(13, 0, 8)
 }
 
-# TODO here are too many classes with too little functionality!!!
-
-def hd(dat, pad_width=1, word_width=None):
-    ''' print a hex-dump, word_width in bytes '''
-    if word_width is None:
-        word_width = pad_width
-    for i, d in enumerate(dat):
-        if i % 8 == 0 and len(dat) > 8:
-            print('\n{:04x}: '.format(i * word_width), end='')
-        print('{:0{ww}x} '.format(d, ww=pad_width * 2), end='')
-    print()
-
 
 class JESD204BConfigurationData:
     def __init__(self):
@@ -90,8 +78,8 @@ class JESD204BConfigurationData:
         # configuration fields (sum of Register 0x450 to Register 0x45A, modulo 256).
         f_chk = configuration_data_fields['chksum']
         octets[f_chk.octet] = sum(octets[:0x0a + 1]) & 0xFF
-        print('jesd config hexdump:', end='')
-        hd(octets)
+        print('JESD204B config data:\n    ', end='')
+        [print('{:02x} '.format(o), end='') for o in octets]
         print()
         return octets
 
